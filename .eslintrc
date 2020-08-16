@@ -1,0 +1,46 @@
+{
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "rules": {
+        "semi": [
+            "warn",
+            "always"
+        ],
+        "quotes": [
+            "warn",
+            "single"
+        ],
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/no-inferrable-types": "off",
+        "@typescript-eslint/no-unused-vars": 1,
+        "@typescript-eslint/interface-name-prefix": "off",
+        "indent": [
+            "warn",
+            4
+        ],
+        "no-unused-vars": "warn",
+        "no-var": "warn",
+        "keyword-spacing": "warn",
+        "space-before-function-paren": "warn",
+        "space-infix-ops": "warn",
+        "comma-spacing": "warn",
+        "operator-linebreak": "warn",
+        "no-cond-assign": "warn",
+        "block-spacing": "warn",
+        "eol-last": "warn",
+        "func-call-spacing": "warn",
+        "new-parens": "warn",
+        "no-const-assign": "warn",
+        "no-new": "warn",
+        "no-unneeded-ternary": "warn",
+        "no-unreachable": "warn",
+        "spaced-comment": "warn"
+    }
+}
