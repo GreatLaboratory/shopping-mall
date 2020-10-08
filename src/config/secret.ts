@@ -9,6 +9,10 @@ export const SENS_ACCESS_KEY_ID: string = process.env.SENS_ACCESS_KEY_ID;
 export const SENS_PHONE_NUM: string = process.env.SENS_PHONE_NUM;
 export const KAKAO_ADMIN_KEY: string = process.env.KAKAO_ADMIN_KEY;
 export const KAKAOPAY_CID_KEY: string = process.env.KAKAOPAY_CID_KEY;
+export const AWS_ACCESS_KEY_ID: string = process.env.AWS_ACCESS_KEY_ID;
+export const AWS_SECRET_KEY_ID: string = process.env.AWS_SECRET_KEY_ID;
+export const AWS_REGION: string = process.env.AWS_REGION;
+
 
 export const makeSignature = () => {
     const space = ' ';				// one space
