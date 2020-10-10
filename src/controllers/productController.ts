@@ -768,29 +768,25 @@ export const searchProduct = async (req: Request, res: Response, next: NextFunct
     const resPerPage: number = 12;
     try {
         if (keyword) {
-            const searchProductList: ProductDocument[] = await Product.find({ name: { $regex: keyword, $options: 'i' }, allowStatus: '판매 허가' })
-                .select('mainImages marketName name price discountRate sales');
+            const marketList: MarketDocument[] = await Market.find({
+                allowStatus: '입점 허가',
+                $or: [{name: new RegExp(keyword, 'i')}, {tags: new RegExp(keyword, 'i')}]
+            })
+                .select('tags name image introduce like')
+                .sort('-sales')
+                .skip((pageNum - 1) * resPerPage)
+                .limit(resPerPage);
 
-            const productList: ProductDocument[] = await Product.find({ allowStatus: '판매 허가' })
-                .select('mainImages marketName name price discountRate tags sales');
+            const productList: ProductDocument[] = await Product.find({
+                allowStatus: '판매 허가',
+                $or: [{name: new RegExp(keyword, 'i')}, {tags: new RegExp(keyword, 'i')}]
+            })
+                .select('mainImages marketName name price discountRate sales')
+                .sort('-sales')
+                .skip((pageNum - 1) * resPerPage)
+                .limit(resPerPage);
 
-            const tagProductList: ProductDocument[] = productList.filter((product: ProductDocument) => {
-                const regExp: RegExp = new RegExp(keyword, 'gi');
-                const temp: string[] = product.tags.filter((tag: string) => tag.match(regExp) !== null);
-                return temp.length !== 0;
-            });
-
-            const getUniqueObjectArray = (productList: ProductDocument[]) => {
-                return productList.filter((product: ProductDocument, index: number) => {
-                    return productList.findIndex((product2: ProductDocument) => {
-                        return product.name === product2.name;
-                    }) === index;
-                });
-            };
-            const temp = getUniqueObjectArray([...searchProductList, ...tagProductList])
-                .sort((a: ProductDocument, b: ProductDocument) => b.sales - a.sales);
-                
-            const result = temp.slice((pageNum - 1) * resPerPage, pageNum * resPerPage);
+            const result = [...marketList, ...productList];
             
             res.status(200).json(result);
         } else {
