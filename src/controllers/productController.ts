@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import moment from 'moment';
 
 import { Cart, CartDocument } from '../models/order/Cart';
 import { FirstCategory, FirstCategoryDocument } from '../models/category/FirstCategory';
@@ -508,31 +509,65 @@ export const getRecommendProductList = async (req: Request, res: Response, next:
     const { page } = req.params;
     const pageNum: number = parseInt(page, 10);
     const resPerPage: number = 12;
-    const random: number = new Date().getDate() % 2 === 0 ? (new Date().getDate() * 3) / 100 : 1 - (new Date().getDate() * 3) / 100;
+    const randomDate = moment().subtract(2, 'months').startOf('day').toDate();
     try {
-        const productList: ProductDocument[] = await Product
-            .find({ allowStatus: '판매 허가', createdAt: { $gte: new Date(`${new Date().getFullYear()}-${new Date().getMonth() - 1}-${new Date().getDate()}`) } })
-            .select('mainImages marketName name price discountRate sales');
-        productList.sort(() => 0.5 - random);
-        if (sort === 'highPrice') {
-            productList.sort((a: ProductDocument, b: ProductDocument) => b.price * (1 - b.discountRate / 100) - a.price * (1 - a.discountRate / 100));
-            const result = productList.slice((pageNum - 1) * resPerPage, pageNum * resPerPage);
-            res.status(200).json(result);
-        } else if (sort === 'lowPrice') {
-            productList.sort((a: ProductDocument, b: ProductDocument) => a.price * (1 - a.discountRate / 100) - b.price * (1 - b.discountRate / 100));
-            const result = productList.slice((pageNum - 1) * resPerPage, pageNum * resPerPage);
-            res.status(200).json(result);
+        if (sort === 'highPrice' || sort === 'lowPrice') {
+            const productList: ProductDocument[] = await Product.aggregate([
+                {$match: {allowStatus: '판매 허가', createdAt: {$gte: randomDate}}},
+                {
+                    $addFields: {
+                        discountedPrice: {$multiply: ['$price', {$subtract: [1, {$divide: ['$discountRate', 100]}]}]}
+                    }
+                },
+                {$sort: {discountedPrice: sort === 'highPrice' ? -1 : 1}},
+                {$skip: (pageNum - 1) * resPerPage},
+                {$limit: resPerPage},
+                {
+                    $project: {
+                        mainImages: 1,
+                        marketName: 1,
+                        name: 1,
+                        price: 1,
+                        discountRate: 1,
+                        sales: 1,
+                        soldOut: 1
+                    }
+                }
+            ]);
+            return res.status(200).json(productList);
         } else if (sort === 'highReview') {
-            productList.sort((a: ProductDocument, b: ProductDocument) => b.review - a.review);
-            const result = productList.slice((pageNum - 1) * resPerPage, pageNum * resPerPage);
-            res.status(200).json(result);
+            const productList: ProductDocument[] = await Product.find({
+                allowStatus: '판매 허가',
+                createdAt: {$gte: randomDate}
+            })
+                .select('mainImages marketName name price discountRate sales soldOut')
+                .sort('-review')
+                .skip((pageNum - 1) * resPerPage)
+                .limit(resPerPage);
+            return res.status(200).json(productList);
         } else if (sort === 'highSales') {
-            productList.sort((a: ProductDocument, b: ProductDocument) => b.sales - a.sales);
-            const result = productList.slice((pageNum - 1) * resPerPage, pageNum * resPerPage);
-            res.status(200).json(result);
+            const productList: ProductDocument[] = await Product.find({
+                allowStatus: '판매 허가',
+                createdAt: {$gte: randomDate}
+            })
+                .select('mainImages marketName name price discountRate sales soldOut')
+                .sort('-sales')
+                .skip((pageNum - 1) * resPerPage)
+                .limit(resPerPage);
+            return res.status(200).json(productList);
         } else {
-            const result = productList.slice((pageNum - 1) * resPerPage, pageNum * resPerPage);
-            res.status(200).json(result);
+            const random: number = new Date().getDate() % 2 === 0 ? (new Date().getDate() * 3) / 100 : 1 - (new Date().getDate() * 3) / 100;
+
+            const productList: ProductDocument[] = await Product.find({
+                allowStatus: '판매 허가',
+                createdAt: {$gte: randomDate}
+            })
+                .select('mainImages marketName name price discountRate sales soldOut')
+                .skip((pageNum - 1) * resPerPage)
+                .sort((random > 0.5 ? '-' : '') + '$natural')
+                .limit(resPerPage);
+
+            return res.status(200).json(productList);
         }
     } catch (err) {
         console.log(err);
